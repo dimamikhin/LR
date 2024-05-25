@@ -1,0 +1,45 @@
+@startuml
+'logical_view_3'
+skinparam monochrome true
+skinparam handwritten false
+hide class circle
+skinparam shadowing false
+
+class TrainingData {
+    name: str
+    uploaded: datetime
+    tested: datetime
+}
+class Client {
+    status: int64
+    seniority: int64
+    home: int64
+    time: int64
+    age: int64
+    marital: int64
+    records: int64
+    job: int64
+    expenses: int64
+    income: int64
+    assets: int64
+    debt: int64
+    amount: int64
+    price: int64
+}
+class KnownClient {
+    status: str
+}
+class Hyperparameter {
+    max_depth: int
+    min_leaf_size: int
+}
+class "List[KnownClient]"
+class "List[Hyperparameter]"
+TrainingData *---> "List[KnownClient]" : training >
+TrainingData *---> "List[KnownClient]" : testing >
+TrainingData *---> "List[Hyperparameter]" : tuning >
+"List[KnownClient]" o--> KnownClient
+"List[Hyperparameter]" *--> Hyperparameter
+Client <|-- KnownClient
+Hyperparameter ...> TrainingData : data >
+@enduml
