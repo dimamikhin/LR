@@ -1,0 +1,15 @@
+@startuml
+'logical_view_4'
+skinparam monochrome true
+skinparam handwritten false
+hide class circle
+skinparam shadowing false
+
+class Hyperparameter {
+    max_depth: int
+    min_leaf_size: int
+    classify(client: UnkownClien): str
+    matchesI(client: KnownClient, status: str): bool
+}
+
+@enduml
