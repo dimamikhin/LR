@@ -1,1 +1,1 @@
-https://plantuml-editor.kkeisuke.com/
+Диаграммы выполнялись в: https://plantuml-editor.kkeisuke.com/
