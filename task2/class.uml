@@ -1,0 +1,54 @@
+@startuml
+'class'
+skinparam monochrome true
+skinparam handwritten false
+hide class circle
+skinparam shadowing false
+
+class TrainingData {
+    name: str
+    uploaded: datetime
+    tested: datetime
+}
+class "List[TestingKnownClient]"
+class "List[TrainingKnownClient]"
+class TestingKnownClient
+class TrainingKnownClient
+class Client {
+    status: int64
+    seniority: int64
+    home: int64
+    time: int64
+    age: int64
+    marital: int64
+    records: int64
+    job: int64
+    expenses: int64
+    income: int64
+    assets: int64
+    debt: int64
+    amount: int64
+    price: int64
+}
+class KnownClient {
+    status: str
+}
+class Hyperparameter {
+    max_depth: int
+    min_leaf_size: int
+}
+class "List[KnownClient]"
+class "List[Hyperparameter]"
+TrainingData *---> "List[KnownClient]" : training >
+TrainingData *---> "List[TrainingKnownClient]" : training >
+TrainingData *---> "List[KnownClient]" : testing >
+TrainingData *---> "List[TestingKnownClient]" : testing >
+TrainingData *---> "List[Hyperparameter]" : tuning >
+"List[KnownClient]" o--> KnownClient
+"List[TestingKnownClient]" o--> TestingKnownClient
+"List[Hyperparameter]" *--> Hyperparameter
+Client <|-- KnownClient
+KnownClient <|-- TestingKnownClient
+KnownClient <|-- TrainingKnownClient
+Hyperparameter ...> TrainingData : data >
+@enduml
