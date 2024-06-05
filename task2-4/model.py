@@ -306,3 +306,9 @@ KnownClient = """
 >>> x
 UnknownSample(seniority=1, home=1, age=1, marital=1, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
 """
+
+test_UnknownClient = """
+>>> u = Client(2,2,2,2,2,2,2,2,2)
+>>> u
+Client(seniority=2, home=2, age=2, marital=2, records=2, expenses=2, assets=2, amount=2, price=2)
+"""
