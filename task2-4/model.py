@@ -9,7 +9,6 @@ from typing import (
     Union,
     Iterable
 )
-
 import weakref
 
 
@@ -254,11 +253,11 @@ class TrainingData:
         self.tested = datetime.datetime.now(tz=datetime.timezone.utc)
 
 
-
     def classify(self, parameter: Hyperparameter, client: UnknownClient) -> ClassifiedClient:
 
 
         return ClassifiedClient(classification=parameter.classify_list(TrainingData.get_client_as_list(client)), client=client)
+
 
 
 KnownClient = """
