@@ -238,7 +238,7 @@ class TrainingData:
                 assets = int(row["assets"]),
                 amount = int(row["amount"]),
                 price = int(row["price"]),
-                status = row["status"];
+                status = row["status"]
             )
             if n % 5 == 0:
                 self.testing.append(client)
@@ -299,3 +299,10 @@ class TrainingData:
                 client.price
             ]
         ]
+
+
+KnownClient = """
+>>> x = Sample(1, 1, 1, 1, 1, 1, 1, 1, 1)
+>>> x
+UnknownSample(seniority=1, home=1, age=1, marital=1, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
+"""
