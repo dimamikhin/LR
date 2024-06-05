@@ -261,46 +261,6 @@ class TrainingData:
         return ClassifiedClient(classification=parameter.classify_list(TrainingData.get_client_as_list(client)), client=client)
 
 
-    @staticmethod
-    def get_list_clients(clients: list[Client]) -> list:
-        return [
-            [
-                client.seniority,
-                client.home,
-                client.age,
-                client.marital,
-                client.records,
-                client.expenses,
-                client.assets,
-                client.amount,
-                client.price
-            ]
-            for client in clients
-        ]
-
-
-    @staticmethod
-    def get_statuses_clients(clients: list[KnownClient]) -> list:
-        return [client.status for client in clients]
-
-
-    @staticmethod
-    def get_client_as_list(client: Client) -> list:
-        return [
-            [
-                client.seniority,
-                client.home,
-                client.age,
-                client.marital,
-                client.records,
-                client.expenses,
-                client.assets,
-                client.amount,
-                client.price
-            ]
-        ]
-
-
 KnownClient = """
 >>> x = Sample(1, 1, 1, 1, 1, 1, 1, 1, 1)
 >>> x
