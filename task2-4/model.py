@@ -1,7 +1,8 @@
+from __future__ import annotations
+
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_auc_score
 
-from __future__ import annotations
 import datetime
 from typing import (
     Optional,
@@ -14,7 +15,7 @@ import weakref
 
 class Client:
 
-    def __init__(
+     def __init__(
         self,
         seniority: int,
         home: int,
@@ -49,6 +50,7 @@ class Client:
             f"price={self.price}"
             f")"
         )
+
 
 class KnownClient(Client):
     def __init__(self,
@@ -87,13 +89,14 @@ class KnownClient(Client):
             f"expenses={self.assets},"
             f"amount={self.amount},"
             f"price={self.price},"
-            f"status={self.species!r},"
+            f"status={self.status!r},"
             f")"
         )
 
 
 class TrainingKnownClient(KnownClient):
     pass
+
 
 class TestingKnownClient(KnownClient):
     def __init__(self,
@@ -107,7 +110,7 @@ class TestingKnownClient(KnownClient):
         assets: int,
         amount: int,
         price: int,
-        classification: Optional[str] = None
+        classification: Optional[int] = None
     ) -> None:
         super().__init__(
             status,
@@ -123,8 +126,9 @@ class TestingKnownClient(KnownClient):
         )
         self.classification = classification
 
+
     def mathces(self) -> bool:
-        self.species = self.classification
+        self.status = self.classification
 
     def __repr__(self) -> str:
         return (
@@ -137,7 +141,7 @@ class TestingKnownClient(KnownClient):
             f"expenses={self.assets},"
             f"amount={self.amount},"
             f"price={self.price},"
-            f"status={self.species!r},"
+            f"status={self.status!r},"
             f"classification={self.classification!r}"
             f")"
         )
@@ -148,7 +152,7 @@ class UnknownClient(Client):
 
 
 class ClassifiedClient(Client):
-    def __init__(self, classification: str, client: UnknownClient) -> None:
+    def __init__(self, classification: int, client: UnknownClient) -> None:
         super().__init__(
             seniority=client.seniority,
             home=client.home,
@@ -177,12 +181,14 @@ class ClassifiedClient(Client):
             f")"
         )
 
+
 class Hyperparameter:
-    def __init__(self, max_depth: int, min_sample_size: int, training: "TrainingData") -> None:
+    def __init__(self, max_depth: int, min_samples_split: int, training: "TrainingData") -> None:
         self.max_depth = max_depth
-        self.min_leaf_size = min_sample_size
+        self.min_samples_split = min_samples_split
         self.data: weakref.ReferenceType["TrainingData"] = weakref.ref(training)
         self.quality: float
+
 
     def test(self) -> None:
         trainingData: Optional["TrainingData"] = self.data()
@@ -196,6 +202,7 @@ class Hyperparameter:
         for i in range(len(y_predict)):
             test_data[i].classification = y_predict[i]
 
+
     def classify_list(self, clients: list[Union[UnknownClient, TestingKnownClient]]) -> list:
         training_data = self.data
         if not training_data:
@@ -204,11 +211,9 @@ class Hyperparameter:
         x_train = TrainingData.get_list_clients(training_data)
         y_train = TrainingData.get_statuses_clients(training_data)
 
-        classifier = DecisionTreeClassifier()
+        classifier = DecisionTreeClassifier(max_depth=self.max_depth, min_samples_split=self.min_samples_split)
         classifier = classifier.fit(x_train, y_train)
         return classifier.predict(x_predict).tolist()
-
-
 
 
 class TrainingData:
@@ -233,7 +238,7 @@ class TrainingData:
                 assets = int(row["assets"]),
                 amount = int(row["amount"]),
                 price = int(row["price"]),
-                status = row["status"]
+                status = row["status"];
             )
             if n % 5 == 0:
                 self.testing.append(client)
@@ -241,19 +246,20 @@ class TrainingData:
                 self.training.append(client)
         self.uploaded = datetime.date.now(tz=datetime.timezone.utc)
 
+
     def test(self, parameter: Hyperparameter) -> None:
-      
 
         parameter.test()
         self.tuning.append(parameter)
         self.tested = datetime.datetime.now(tz=datetime.timezone.utc)
 
 
-    def classify(self, parameter: Hyperparameter, client: Client) -> Client:
 
-        classification = parameter.classify(client)
-        client.classify(classification)
-        return client
+    def classify(self, parameter: Hyperparameter, client: UnknownClient) -> ClassifiedClient:
+
+
+        return ClassifiedClient(classification=parameter.classify_list(TrainingData.get_client_as_list(client)), client=client)
+
 
     @staticmethod
     def get_list_clients(clients: list[Client]) -> list:
@@ -272,6 +278,24 @@ class TrainingData:
             for client in clients
         ]
 
+
     @staticmethod
     def get_statuses_clients(clients: list[KnownClient]) -> list:
         return [client.status for client in clients]
+
+
+    @staticmethod
+    def get_client_as_list(client: Client) -> list:
+        return [
+            [
+                client.seniority,
+                client.home,
+                client.age,
+                client.marital,
+                client.records,
+                client.expenses,
+                client.assets,
+                client.amount,
+                client.price
+            ]
+        ]
