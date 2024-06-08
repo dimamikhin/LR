@@ -261,9 +261,9 @@ class TrainingData:
 
 
 KnownClient = """
->>> x = Sample(1, 1, 1, 1, 1, 1, 1, 1, 1)
+>>> x = Client(1, 1, 1, 1, 1, 1, 1, 1, 1)
 >>> x
-UnknownSample(seniority=1, home=1, age=1, marital=1, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
+KnownClient(seniority=1, home=1, age=1, marital=1, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
 """
 
 test_UnknownClient = """
