@@ -325,7 +325,22 @@ class TrainingData:
             classification = parameter.classify(client)
             client.classify(classification)
             return client
-
+    @staticmethod
+    def get_list_clients(clients: list[Client]) -> list:
+        return [
+                [
+                    client.seniority,
+                    client.home,
+                    client.age,
+                    client.marital,
+                    client.records,
+                    client.expenses,
+                    client.assets,
+                    client.amount,
+                    client.price
+                ]
+                for client in clients
+            ]
 
 test_KnownClient = """
 >>> x = Client(1, 1, 1, 1, 1, 1, 1, 1, 1)
