@@ -1,4 +1,4 @@
-Запуск: 
+Запуск с консоли: 
 cd task3
 
 python -m venv env
@@ -11,3 +11,7 @@ python
 
 from src.models import *класс*
 
+
+Запуск в РС:
+python
+from model import *класс*
