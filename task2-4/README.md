@@ -14,4 +14,5 @@ from src.models import *класс*
 
 Запуск в РС:
 python
+
 from model import *класс*
