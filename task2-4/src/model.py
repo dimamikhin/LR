@@ -5,12 +5,16 @@ from sklearn.metrics import roc_auc_score
 
 import datetime
 from typing import (
+    cast,
     Optional,
     Union,
     Iterable
 )
 import weakref
 
+
+class InvalidClientError(ValueError):
+    """Файл исходных данных имеет недопустимое представление данных."""
 
 class Client:
 
@@ -40,13 +44,13 @@ class Client:
     def __repr__(self) -> str:
         return (
             f"{self.__class__.__name__}("
-            f"seniority={self.seniority}"
-            f"home={self.home}"
-            f"age={self.age}"
-            f"marital={self.marital}"
-            f"records={self.records}"
-            f"expenses={self.assets}"
-            f"amount={self.amount}"
+            f"seniority={self.seniority},"
+            f"home={self.home},"
+            f"age={self.age},"
+            f"marital={self.marital},"
+            f"records={self.records},"
+            f"expenses={self.assets},"
+            f"amount={self.amount},"
             f"price={self.price}"
             f")"
         )
@@ -89,25 +93,25 @@ class KnownClient(Client):
             f"expenses={self.assets},"
             f"amount={self.amount},"
             f"price={self.price},"
-            f"status={self.status!r},"
+            f"status={self.status!r}"
             f")"
         )
     @classmethod
     def from_dict(cls, row: dict[str, str]) -> "KnownClient":
         if row["status"] not in {"0", "1", "2"}:
-            raise InvalidSampleError(f"invalid status in {row!r}")
+            raise InvalidClientError(f"invalid status in {row!r}")
         try:
             return cls(
-                species=int["species"],
-                seniority=int["seniority"],
-                home=int["home"],
-                age=int["age"],
-                marital=int["marital"],
-                records=int["records"],
-                expenses=int["expenses"],
-                assets=int["assets"],
-                amount=int["amount"],
-                price=int["price"],
+                status=int(row["status"]),
+                seniority=int(row["seniority"]),
+                home=int(row["home"]),
+                age=int(row["age"]),
+                marital=int(row["marital"]),
+                records=int(row["records"]),
+                expenses=int(row["expenses"]),
+                assets=int(row["assets"]),
+                amount=int(row["amount"]),
+                price=int(row["price"]),
             )
         except ValueError as ex:
             raise InvalidClientError(f"invalid {row!r}")
@@ -194,30 +198,9 @@ class UnknownClient(Client):
                 amount=int(row["amount"]),
                 price=int(row["price"]),
             )
-        except (ValueError, KeyError) as ex:
-            raise InvalidClientError(f"invalid {row!r}")
+        except ValueError:
+            raise InvalidClientError(f"invalid status in {row!r}")
 
-test_load_valid = """
->>> valid = {"seniority": "1", "home": "2", "age": "3", "marital": "4", "records": "5", "expenses": "1", "assets": "2",
-... "amount": "3", "price": "4", "status": "2"}
->>> ks = KnownClient.from_dict(valid)
->>> ks
-KnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
-
->>> rks = TrainingKnownClient.from_dict(valid)
->>> rks
-TrainingKnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
-
->>> eks = TestingKnownClient.from_dict(valid)
->>> eks
-TestingKnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2, classification=None, )
-
->>> valid_us = valid.copy()
->>> del valid_us['status']
->>> us = UnknownClient.from_dict(valid_us)
->>> us
-UnknownClient((seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
-"""
 
 class ClassifiedClient(Client):
     def __init__(self, classification: int, client: UnknownClient) -> None:
@@ -296,24 +279,18 @@ class TrainingData:
     def load(self, raw_data_soruce: Iterable[dict[str, str]]) -> None:
 
         for n, row in enumerate(raw_data_soruce):
-            client = Client(
-                seniority = int(row["seniority"]),
-                home = int(row["home"]),
-                age = int(row["age"]),
-                marital = int(row["marital"]),
-                records = int(row["records"]),
-                expenses = int(row["expenses"]),
-                assets = int(row["assets"]),
-                amount = int(row["amount"]),
-                price = int(row["price"]),
-                status = row["status"]
-            )
-            if n % 5 == 0:
-                self.testing.append(client)
-            else:
-                self.training.append(client)
-        self.uploaded = datetime.date.now(tz=datetime.timezone.utc)
+            try:
+                if n % 5 == 0:
+                    client_test = TestingKnownClient.from_dict(row)
+                    self.testing.append(client_test)
+                else:
+                    client_train = TrainingKnownClient.from_dict(row)
+                    self.training.append(client_train)
+            except InvalidClientError as exception:
+                print(f"Row: {n + 1} {exception}")
+                return
 
+        self.uploaded = datetime.datetime.now(tz=datetime.timezone.utc)
 
     def test(self, parameter: Hyperparameter) -> None:
 
@@ -325,34 +302,112 @@ class TrainingData:
             classification = parameter.classify(client)
             client.classify(classification)
             return client
+
     @staticmethod
     def get_list_clients(clients: list[Client]) -> list:
         return [
-                [
-                    client.seniority,
-                    client.home,
-                    client.age,
-                    client.marital,
-                    client.records,
-                    client.expenses,
-                    client.assets,
-                    client.amount,
-                    client.price
-                ]
-                for client in clients
+            [
+                client.seniority,
+                client.home,
+                client.age,
+                client.marital,
+                client.records,
+                client.expenses,
+                client.assets,
+                client.amount,
+                client.price
             ]
+            for client in clients
+        ]
+    @staticmethod
+    def get_statuses_clients(clients: list[KnownClient]) -> list:
+        return [client.status for client in clients]
 
-test_KnownClient = """
+    @staticmethod
+    def get_client_as_list(client: Client) -> list:
+        return [
+            [
+                client.seniority,
+                client.home,
+                client.age,
+                client.marital,
+                client.records,
+                client.expenses,
+                client.assets,
+                client.amount,
+                client.price
+            ]
+        ]
+
+
+test_Client = """
 >>> x = Client(1, 1, 1, 1, 1, 1, 1, 1, 1)
 >>> x
 KnownClient(seniority=1, home=1, age=1, marital=1, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
 """
 
-test_UnknownClient = """
->>> u = Client(2,2,2,2,2,2,2,2,2)
+test_KnownClient = """
+>>> u = KnownClient(2,2,2,2,2,2,2,2,2)
 >>> u
 Client(seniority=2, home=2, age=2, marital=2, records=2, expenses=2, assets=2, amount=2, price=2)
 """
 
+test_TestingKnownClient = """
+>>> ts = TestingKnownClient(seniority=2, home=2, age=2, marital=2, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
+>>> ts
+TestingKnownClient(seniority=2, home=2, age=2, marital=2, records=1, expenses=1, assets=1, amount=1, price=1, status=1, classification=None, )
+>>> ts.classification = "2"
+>>> ts
+TestingKnownClient(seniority=2, home=2, age=2, marital=2, records=1, expenses=1, assets=1, amount=1, price=1, status=1, 
+... classification='2', )
+"""
+
+test_ClassifiedClient = """
+>>> u = UnknownClient(seniority=2, home=2, age=2, marital=2, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
+>>> c = ClassifiedClient(classification="2", sample=u)
+>>> c
+ClassifiedClient(seniority=2, home=2, age=2, marital=2, records=1, expenses=1, assets=1, amount=1, price=1, status=2, 
+...classification='2', )
+"""
+
+test_invalid_TrainingData = """
+>>> td = TrainingData('test')
+>>> raw_data = [
+{"status": 10, "seniority": 17, "home": 1, "age": 58, "marital": 3, "records": 1, "expenses": 48, "assets": 2500, "amount": 1000, "price": 1685},
+{"status": 2, "seniority": 17, "home": 1, "age": 58, "marital": 3, "records": 1, "expenses": 48, "assets": 2500, "amount": 1000, "price": 1685},
+]
+>>> td.load(raw_data)
+"""
+
+test_load_valid = """
+>>> valid = {"seniority": "1", "home": "2", "age": "3", "marital": "4", "records": "5", "expenses": "1", "assets": "2", "amount": "3", "price": "4", "status": "2"}
+>>> ks = KnownClient.from_dict(valid)
+>>> ks
+KnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
+
+>>> rks = TrainingKnownClient.from_dict(valid)
+>>> rks
+TrainingKnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
+
+>>> eks = TestingKnownClient.from_dict(valid)
+>>> eks
+TestingKnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2, classification=None, )
+"""
+
+test_load_invalid_species = """
+>>> invalid = {"seniority": "five", "home": "2", "age": "3", "marital": "4", "records": "5", "expenses": "1", "assets": "2", "amount": "3", "price": "4", "status": "2"}
+>>> ks = KnownClient.from_dict(invalid)
+Traceback (most recent call last):
+model.InvalidClientError: invalid {'seniority': 'five', 'home': '2', 'age': '3', 'marital': '4', 'records': '5', 'expenses': '1', 'assets': '2', 'amount': '3', 'price': '4', 'status': '2'}
+
+rks = TrainingKnownClient.from_dict(invalid)
+Traceback (most recent call last):
+model.InvalidClientError: invalid {'seniority': 'five', 'home': '2', 'age': '3', 'marital': '4', 'records': '5', 'expenses': '1', 'assets': '2', 'amount': '3', 'price': '4', 'status': '2'}
+
+>>> eks = TestingKnownClient.from_dict(invalid)
+Traceback (most recent call last):
+model.InvalidClientError: invalid {'seniority': 'five', 'home': '2', 'age': '3', 'marital': '4', 'records': '5', 'expenses': '1', 'assets': '2', 'amount': '3', 'price': '4', 'status': '2'}
+
+"""
 
 input('Press ENTER to exit')
