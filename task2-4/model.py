@@ -253,10 +253,12 @@ class TrainingData:
         self.tested = datetime.datetime.now(tz=datetime.timezone.utc)
 
 
-    def classify(self, parameter: Hyperparameter, client: UnknownClient) -> ClassifiedClient:
+    def classify(self, parameter: Hyperparameter, client: Client) -> Client:
+       
+        classification = parameter.classify(client)
+        client.classify(classification)
+        return client
 
-
-        return ClassifiedClient(classification=parameter.classify_list(TrainingData.get_client_as_list(client)), client=client)
 
 
 
