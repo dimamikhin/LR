@@ -2,15 +2,18 @@ from __future__ import annotations
 
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import roc_auc_score
+from pathlib import Path
 
 import datetime
+import csv
+import weakref
+
 from typing import (
     cast,
     Optional,
     Union,
     Iterable
 )
-import weakref
 
 
 class InvalidClientError(ValueError):
@@ -276,21 +279,21 @@ class TrainingData:
         self.testing: list[TestingKnownClient] = []
         self.tuning: list[Hyperparameter] = []
 
-    def load(self, raw_data_soruce: Iterable[dict[str, str]]) -> None:
 
-        for n, row in enumerate(raw_data_soruce):
+    def load(self, Client: Iterable(dict[str, str])) -> None:
+        for n, row in enumerate(Client):
             try:
                 if n % 5 == 0:
-                    client_test = TestingKnownClient.from_dict(row)
-                    self.testing.append(client_test)
+                    test = TestingKnownClient.from_dict(row)
+                    self.testing.append(test)
                 else:
-                    client_train = TrainingKnownClient.from_dict(row)
-                    self.training.append(client_train)
-            except InvalidClientError as exception:
-                print(f"Row: {n + 1} {exception}")
+                    train = TrainingKnownClient.from_dict(row)
+                    self.training.append(train)
+            except InvalidSampleError as ex:
+                print(f"Row {n + 1}: {ex}")
                 return
-
         self.uploaded = datetime.datetime.now(tz=datetime.timezone.utc)
+
 
     def test(self, parameter: Hyperparameter) -> None:
 
@@ -380,6 +383,8 @@ class ClientReader:
 
 class BadClientRow(ValueError):
     pass
+
+
 
 test_Client = """
 >>> x = Client(1, 1, 1, 1, 1, 1, 1, 1, 1)
