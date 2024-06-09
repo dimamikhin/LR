@@ -339,6 +339,47 @@ class TrainingData:
             ]
         ]
 
+class ClientReader:
+    target_class = Client
+    header = [
+        "seniority",
+        "home",
+        "age",
+        "marital",
+        "records",
+        "expenses",
+        "assets",
+        "amount",
+        "price",
+        "status",
+    ]
+
+    def __init__(self, source: Path) -> None:
+        self.source = source
+
+    def client_iter(self) -> Iterator[Client]:
+        target_class = self.target_class
+        with self.source.open() as source_file:
+            reader = csv.DictReader(source_file, self.header)
+            for row in reader:
+                try:
+                    client = target_class(
+                        seniority = int(row["seniority"]),
+                        home = int(row["home"]),
+                        age = int(row["age"]),
+                        marital = int(row["marital"]),
+                        records = int(row["records"]),
+                        expenses = int(row["expenses"]),
+                        assets = int(row["assets"]),
+                        amount = int(row["amount"]),
+                        price = int(row["price"]),
+                    )
+                except ValueError as exception:
+                    raise BadClientRow(f"invalid {row!r}")
+                yield client
+
+class BadClientRow(ValueError):
+    pass
 
 test_Client = """
 >>> x = Client(1, 1, 1, 1, 1, 1, 1, 1, 1)
