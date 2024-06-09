@@ -14,17 +14,17 @@ import weakref
 
 class Client:
 
-     def __init__(
-        self,
-        seniority: int,
-        home: int,
-        age: int,
-        marital: int,
-        records: int,
-        expenses: int,
-        assets: int,
-        amount: int,
-        price: int
+    def __init__(
+            self,
+            seniority: int,
+            home: int,
+            age: int,
+            marital: int,
+            records: int,
+            expenses: int,
+            assets: int,
+            amount: int,
+            price: int
     ) -> None:
         self.seniority = seniority
         self.home = home
@@ -35,6 +35,7 @@ class Client:
         self.assets = assets
         self.amount = amount
         self.price = price
+
 
     def __repr__(self) -> str:
         return (
@@ -91,10 +92,31 @@ class KnownClient(Client):
             f"status={self.status!r},"
             f")"
         )
-
+    @classmethod
+    def from_dict(cls, row: dict[str, str]) -> "KnownClient":
+        if row["status"] not in {"0", "1", "2"}:
+            raise InvalidSampleError(f"invalid status in {row!r}")
+        try:
+            return cls(
+                species=int["species"],
+                seniority=int["seniority"],
+                home=int["home"],
+                age=int["age"],
+                marital=int["marital"],
+                records=int["records"],
+                expenses=int["expenses"],
+                assets=int["assets"],
+                amount=int["amount"],
+                price=int["price"],
+            )
+        except ValueError as ex:
+            raise InvalidClientError(f"invalid {row!r}")
 
 class TrainingKnownClient(KnownClient):
-    pass
+
+    @classmethod
+    def from_dict(cls, row: dict[str, str]) -> "TrainingKnownClient":
+        return cast(TrainingKnownClient, super().from_dict(row))
 
 
 class TestingKnownClient(KnownClient):
@@ -147,8 +169,55 @@ class TestingKnownClient(KnownClient):
 
 
 class UnknownClient(Client):
-    pass
+    @classmethod
+    def from_dict(cls, row: dict[str, str]) -> "UnknownClient":
+        if set(row.keys()) != {
+            "seniority",
+            "home",
+            "age",
+            "marital",
+            "records",
+            "assets",
+            "amount",
+            "price",
+        }:
+            raise InvalidClientError(f"invalid fields in {row!r}")
+        try:
+            return cls(
+                seniority=int(row["seniority"]),
+                home=int(row["home"]),
+                age=int(row["age"]),
+                marital=int(row["marital"]),
+                records=int(row["records"]),
+                expenses=int(row["expenses"]),
+                assets=int(row["assets"]),
+                amount=int(row["amount"]),
+                price=int(row["price"]),
+            )
+        except (ValueError, KeyError) as ex:
+            raise InvalidClientError(f"invalid {row!r}")
 
+test_load_valid = """
+>>> valid = {"seniority": "1", "home": "2", "age": "3", "marital": "4", "records": "5", "expenses": "1", "assets": "2",
+... "amount": "3", "price": "4", "status": "2"}
+>>> ks = KnownClient.from_dict(valid)
+>>> ks
+KnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
+
+>>> rks = TrainingKnownClient.from_dict(valid)
+>>> rks
+TrainingKnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
+
+>>> eks = TestingKnownClient.from_dict(valid)
+>>> eks
+TestingKnownClient(seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2, classification=None, )
+
+>>> valid_us = valid.copy()
+>>> del valid_us['status']
+>>> us = UnknownClient.from_dict(valid_us)
+>>> us
+UnknownClient((seniority=1, home=2, age=3, marital=4, records=5, expenses=1, assets=2, amount=3, price=4, status=2)
+"""
 
 class ClassifiedClient(Client):
     def __init__(self, classification: int, client: UnknownClient) -> None:
@@ -252,17 +321,13 @@ class TrainingData:
         self.tuning.append(parameter)
         self.tested = datetime.datetime.now(tz=datetime.timezone.utc)
 
-
     def classify(self, parameter: Hyperparameter, client: Client) -> Client:
-       
-        classification = parameter.classify(client)
-        client.classify(classification)
-        return client
+            classification = parameter.classify(client)
+            client.classify(classification)
+            return client
 
 
-
-
-KnownClient = """
+test_KnownClient = """
 >>> x = Client(1, 1, 1, 1, 1, 1, 1, 1, 1)
 >>> x
 KnownClient(seniority=1, home=1, age=1, marital=1, records=1, expenses=1, assets=1, amount=1, price=1, status=1)
@@ -273,3 +338,6 @@ test_UnknownClient = """
 >>> u
 Client(seniority=2, home=2, age=2, marital=2, records=2, expenses=2, assets=2, amount=2, price=2)
 """
+
+
+input('Press ENTER to exit')
