@@ -7,18 +7,15 @@ skinparam shadowing false
 
 start
 
-:Получить значение вероятности
-на обучающих данных;
+:Validate name and
+Client instances;
 
-if (Значение = 100) then (нет)
-    :Проверка на валидационных данных;
-    :Выбор перспективных значений 
-    параметров;
-    :Обучение модели с новыми параметрами;
-    :Построение кривой ROC;
+if (valid) then (yes)
+    :Partition Client;
+    :Save new TrainingData;
     stop
-else (да)
-    :Сообщить об ошибке;
+else (no)
+    :Respond with an error;
     stop
 endif
 
